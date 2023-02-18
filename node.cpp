@@ -28,7 +28,7 @@ void Node::setNext(Node* n) {
 // Node constructor
 Node::Node(Student* s) {
   student = s;
-  next = nullptr;
+  next = NULL;
 }
 
 // Node destructor

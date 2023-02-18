@@ -21,3 +21,11 @@ class Node{
   Node(Student*);
   ~Node();
 };
+
+struct node{
+  char first[100];
+  char last[100];
+  float gpa;
+  int id;
+  node* next = NULL;
+};

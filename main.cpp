@@ -1,245 +1,231 @@
-/*Xander Siruo-Nebel
-  C++/Data Structs
+/*Xander Siruno-Nebel
+  C++/Data Structures
   Galbraith
-  Feb 17, 2022
+  Feb 17, 2023
 
-  Hashtable: implementation of a hashtable (aka map aka hashmap) in C++
- */
+  Hashtable: implementation of a hashtable (aka hashmap aka map) in C++
 
+  note: names are a bit off some times (unicode thing maybe?) but it doesn't affect the code
+*/
 
 #include <iostream>
-#include <fstream>
 #include <cstring>
-#include <cmath>
-#include <typeinfo>
 #include "node.h"
+#include <vector>
+#include <iomanip>
+#include <fstream>
 
 using namespace std;
-
-int hashf(int, int);
-int getI(int&);
-void add(Node** hashmap, Node* newStudent, int, int&);
-void print(Node** hashmap, Node* student, int, int);
-void dlt(Node** hashmap, Node* current, int, int);
-void reassign(Node** newmap, Node* current, Node* head, int pos, int HASH_LENGTH);
+node** add(node**, int& currentID, int&);
+node** inputAdd(node** hashtable, int& currentID, int&HASH_LENGTH);
+void print(node** hashtable, int);
+void dlt(node** hashtable, int);
+void empty(node* hashtable[], int HASH_LENGTH);
+node** rehash(node** hashtable, node** newmap, int&, int);
 
 int main(){
+  srand(time(0));
   int HASH_LENGTH = 100;
-  //Node* hashmap[HASH_LENGTH];
-  Node** hashmap = new Node*[HASH_LENGTH];
-  for(int i = 0; i < HASH_LENGTH; i++){
-    hashmap[i] = NULL;
-  }
-  int ii = 0;
-
+  node** hashtable = new node*[100]; //init
+  char input[7];
+  int currentID = 0; //globalish var needed for incrementation
+  empty(hashtable, HASH_LENGTH); //sets all hashtable values as null
   while(true){
-    cout << "Input command (ADD, DLT, QUIT, PRINT)" << endl;
-    char input[10];
+    cout << "Input command (ADD, PRINT, DLT, QUIT):" << endl;
     cin >> input;
-
-    if(strcmp(input, "ADD") == 0){
+    if(strcmp(input,"ADD") == 0){
       cout << "Add by user input (INPUT) or randomization (RAND)?" << endl;
       cin >> input;
-      if(strcmp(input, "INPUT") == 0){
-        cout << "Input ID:" << endl;
-        int id = 0;
-        cin >> id;
-        //int id = (input[5]-'0') + (input[4]-'0')*10 + (input[3]-'0')*100 +
-        //  (input[2]-'0')*1000 + (input[1]-'0')*10000 + (input[0]-'0')*100000;
-
-        cout << "Input First Name:" << endl;
-        char first[35];
-        cin >> first;
-
-        cout << "Input Last Name:" << endl;
-        char last[35];
-        cin >> last;
-
-        cout << "Input GPA:" << endl;
-        float gpa = 0.00;
-        cin >> gpa;
-
-        int pos = hashf(id, HASH_LENGTH);
-        //creates new student
-        Node* newStudent = new Node(new Student((char*)first, last, id, gpa));
-        add(hashmap, newStudent, pos, HASH_LENGTH);
-      }else if(strcmp(input, "RAND") == 0){
-        //gen 1st name
-        ifstream firstFile; //file reader
-        firstFile.open("firstname.txt");
-        char arr[30][55];
-        int i = 0;
-        while(firstFile.getline(arr[i],50,' ')){
-          i++;
-        }
-        //pick random name from created char* array above
-        srand((unsigned) time(NULL));
-        int random = rand() % 49;
-        char* first = arr[random];
-
-        //gen last name
-        //same as above
-        ifstream lastFile;
-        lastFile.open("lastnames.txt");
-        i = 0;
-        while(lastFile.getline(arr[i],50,' ')){
-          i++;
-        }
-        random = rand() % 49;
-        char* last = arr[random];
-
-        //gen gpa
-        double randF = (double)rand();
-        double gpa = fmod(randF, 4.99);
-
-        int id = getI(ii);
-        int pos = hashf(id, HASH_LENGTH);
-        Node* newStudent = new Node(new Student((char*)first, last, id, gpa));
-        add(hashmap, newStudent, pos, HASH_LENGTH);
-        print(hashmap, hashmap[pos], 1, id);
+      if(strcmp(input,"RAND") == 0){
+        hashtable = add(hashtable, currentID, HASH_LENGTH);    
+      }else if(strcmp(input,"INPUT") == 0){
+        hashtable = inputAdd(hashtable, currentID, HASH_LENGTH);
       }
-    }else if(strcmp(input, "PRINT") == 0){
-      cout << "Enter student ID:" << endl;
-      int id = 0;
-      cin >> id;
-      if(hashmap[hashf(id, HASH_LENGTH)] != NULL){
-        //if there's a student with that id
-        int pos = hashf(id, HASH_LENGTH);
-        print(hashmap, hashmap[pos], 1, id);
-      }else{
-        //if not
-        cout << "No such student!" << endl;
-      }
-    }else if(strcmp(input, "QUIT") == 0){
+    }else if(strcmp(input,"PRINT") == 0){
+      print(hashtable, HASH_LENGTH);
+    }else if(strcmp(input,"DLT") == 0){
+      dlt(hashtable, HASH_LENGTH);
+    }else if(strcmp(input,"QUIT") == 0){
       break;
-    }else if(strcmp(input, "DLT") == 0){
-      cout << "Input ID:" << endl;
-      int id = 0;
-      cin >> id;
-      int pos = hashf(id, HASH_LENGTH);
-      if(hashmap[pos]->getNext() != NULL){
-        //if there's >1 things in the bucket
-        //so that print() isn't extremely annoying:
-        cout << "There may be more than 1 students with that ID! Please select which student you'd like to delete ('1', '2', or '3')" << endl;
-        print(hashmap, hashmap[pos], 1, id);
-        int toDlt = 0;
-        cin >> toDlt;
-        dlt(hashmap, hashmap[pos], toDlt, pos);
-      }else{
-        //if there's only 1 thing in the bucket
-        hashmap[pos] = NULL;
-        delete hashmap[pos];
-      }
     }
   }
   return 0;
 }
 
-void add(Node** hashmap, Node* newStudent, int pos, int& HASH_LENGTH){
-  //if statements basically go through ever possible bucket entry combination & edit linked list if needed
-  newStudent->setNext(NULL);
-  if(hashmap[pos] == NULL){
-    hashmap[pos] = newStudent;
-  }else if(hashmap[pos]->getNext() == NULL){
-    hashmap[pos]->setNext(newStudent);
-    newStudent->setNext(NULL);
-  }else if(hashmap[pos]->getNext()->getNext() == NULL){
-    hashmap[pos]->getNext()->setNext(newStudent);
-    newStudent->setNext(NULL);
-  }else{
-    //if the bucket already has 3 entries
-    cout << "REHASH" << endl;
-
-    //makes a bunch of temp hashmap things, makes a new hashmap w double the size
-    int OG_LENGTH = HASH_LENGTH;
-    HASH_LENGTH = HASH_LENGTH*2;
-    Node** newmap = new Node*[HASH_LENGTH];
-    for(int i = 0; i < HASH_LENGTH; i++){
-      newmap[i] = NULL;
+node** add(node** hashtable, int& currentID, int& HASH_LENGTH){ //adds random to array
+  int students;
+  cout << "Input number of students to add:" << endl;
+  cin >> students;
+  for(int i = 0; i < students; i++){
+    char input[100];
+    char first[100];
+    char last[100];
+    fstream ffile("firstname.txt");
+    fstream lfile("lastnames.txt");
+    int count;
+    int num = (rand() % 20) + 1;
+    int num2 = (rand() % 20) + 1;
+    node* newPoint = new node();
+    count = 1;
+    //1st name gen
+    while (ffile.getline(input,100, '\n')) {
+      if (count == num) {
+        strcpy(first,input);
+        count++;
+      }
+      count++;
+    }
+    ffile.close();
+    count = 1;
+    //last name gen
+    while (lfile.getline(input,100, '\n')) {
+      if (count == num2) {
+        strcpy(last, input);
+        count++;
+      }
+      count++;
+    }
+    lfile.close();
+    //gpa gen
+    float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+    r *= 23;
+    while(r > 4){
+      r -= 4;
+      while(r < 2){
+        r += 1;
+      }
     }
 
-    for(int i = 0; i < OG_LENGTH; i++){
-      if(hashmap[i] != NULL){
-        int pos2 = hashf(hashmap[i]->getStudent()->id, HASH_LENGTH);
-        while(hashmap[i] != NULL){
-	  reassign(newmap, hashmap[i], hashmap[i], pos2, HASH_LENGTH);
-	}
-	cout << "test" << endl;
+    strcpy(newPoint->first, first);
+    strcpy(newPoint->last, last);
+    newPoint->id = currentID;
+    newPoint->gpa = r;
+    //if statements basically go through every permutation of bucket fillability
+    if(hashtable[(currentID)%HASH_LENGTH] == NULL){ //1 in bucket
+      hashtable[(currentID%HASH_LENGTH)] = newPoint;
+    }else{
+      if(hashtable[(currentID)%HASH_LENGTH]->next == NULL){ //2 in bucket
+        hashtable[currentID%HASH_LENGTH]->next = newPoint;
+      }else{
+        if(hashtable[(currentID)%HASH_LENGTH]->next->next == NULL){ //3 in bucket
+          hashtable[currentID%HASH_LENGTH]->next->next = newPoint;
+        }else{ //>3 in bucket (REHASH)
+          cout << "REHASH" << endl;
+          node** newmap = new node*[HASH_LENGTH*2];
+          empty(newmap, HASH_LENGTH*2);
+          hashtable = rehash(hashtable, newmap, HASH_LENGTH, currentID);
+          hashtable[currentID%HASH_LENGTH]->next = newPoint;
+        }
+      }
+    }
+    currentID++;
+  }
+  return hashtable;
+}
+
+node** rehash(node** hashtable, node** newmap, int& HASH_LENGTH, int currentID){
+  //makes a temp map 2x HASH_LENGTH, assigns all things in og map to temp map
+  int oldHASH_LENGTH = HASH_LENGTH;
+  HASH_LENGTH = HASH_LENGTH*2;
+  for(int i = 0; i < currentID; i++){
+    //if statements for 3 different possible node placements
+    if(i < oldHASH_LENGTH){ 
+      newmap[(i%HASH_LENGTH)] = hashtable[(i)%oldHASH_LENGTH];
+
+    }else if(i < oldHASH_LENGTH*2){
+      newmap[(i%HASH_LENGTH)] = hashtable[(i)%oldHASH_LENGTH]->next;
+    }else{
+      newmap[i%HASH_LENGTH]->next = hashtable[(i)%oldHASH_LENGTH]->next->next;
+    }
+  }
+  for(int i = HASH_LENGTH/2; i < HASH_LENGTH; i++){
+    newmap[(i%HASH_LENGTH)]->next = NULL;
+  }
+  return newmap;
+}
+
+void print(node** hashtable, int HASH_LENGTH){
+  int i;
+  node* current;
+  cout << "Input student ID:" << endl;
+  cin >> i;
+  cin.clear();
+  //rehashes/unhashes/whatever
+  if(hashtable[i%HASH_LENGTH] != NULL && hashtable[i%HASH_LENGTH]->id == i){
+    current = hashtable[i%HASH_LENGTH];
+  }else if(hashtable[i%HASH_LENGTH]!= NULL && hashtable[i%HASH_LENGTH]->next != NULL && hashtable[i%HASH_LENGTH]->next->id == i){
+    current = hashtable[i%HASH_LENGTH]->next;
+  }else if(hashtable[i%HASH_LENGTH]!= NULL && hashtable[i%HASH_LENGTH]->next != NULL && hashtable[i%HASH_LENGTH]->next->next != NULL && hashtable[i%HASH_LENGTH]->next->next->id == i){
+    current = hashtable[i%HASH_LENGTH]->next->next;
+  }else{
+    cout << "No such student!" << endl;
+    return;
+  }
+  cout << current->first << " " << current->last << " GPA: " <<  fixed << setprecision(2) << current->gpa << " ID: " << current->id << endl;
+}
+
+
+void dlt(node** hashtable, int HASH_LENGTH){
+  int i;
+  cout << "Input student ID:" << endl;
+  cin >> i;
+  cin.clear();
+  //finds student
+  if(hashtable[i%HASH_LENGTH]->id == i){
+    hashtable[i%HASH_LENGTH] = hashtable[i%HASH_LENGTH]->next;
+  }else if(hashtable[i%HASH_LENGTH]->next->id == i){
+    hashtable[i%HASH_LENGTH]->next = hashtable[i%HASH_LENGTH]->next->next;
+  }else if(hashtable[i%HASH_LENGTH]->next->next->id == i){
+    hashtable[i%HASH_LENGTH]->next->next = NULL;
+  }
+  return;
+}
+
+void empty(node** hashtable, int HASH_LENGTH){
+  for(int i = 0; i < HASH_LENGTH; i++){
+    hashtable[i] = NULL;
+  }
+}
+
+node** inputAdd(node** hashtable, int&currentID, int& HASH_LENGTH){
+  char input[100];
+  char first[100];
+  char last[100];
+  float gpa;
+  node* newPoint = new node();
+  cout << "Input first name:" << endl;
+  cin >> first;
+  cin.clear();
+  cout << "Input last name:" << endl;
+  cin >> last;
+  cin.clear();
+  cout << "Input GPA: " << endl;
+  cin >> gpa;
+  cin.clear();
+  strcpy(newPoint->first, first);
+  strcpy(newPoint->last, last);
+  newPoint->id = currentID;
+  newPoint->gpa = gpa;
+  //finds right place for student
+  if(hashtable[(currentID)%HASH_LENGTH] == NULL){ //same thing as real add, go read comments there
+    hashtable[(currentID%HASH_LENGTH)] = newPoint;
+  }else{
+    if(hashtable[(currentID)%HASH_LENGTH]->next == NULL){
+      hashtable[currentID%HASH_LENGTH]->next = newPoint;
+    }else{
+      if(hashtable[(currentID)%HASH_LENGTH]->next->next == NULL){
+        hashtable[currentID%HASH_LENGTH]->next->next = newPoint;
+      }else{
+        node** newmap = new node*[HASH_LENGTH*2];
+        empty(newmap, HASH_LENGTH*2);
+        hashtable = rehash(hashtable, newmap, HASH_LENGTH, currentID);
+        hashtable[currentID%HASH_LENGTH]->next = newPoint;
       }
     }
   }
+  currentID++;
+  return hashtable;
 }
-
-void reassign(Node** newmap, Node* current, Node* last, int pos, int HASH_LENGTH){
-  if(current->getNext() == NULL){
-    cout << current->getStudent()->id << endl;
-    cout << last->getStudent()->id << endl;
-    add(newmap, current, pos, HASH_LENGTH);
-    last->setNext(NULL);
-  }else{
-    reassign(newmap, current->getNext(), current, pos, HASH_LENGTH);
-  }
-}
-
-void dlt(Node** hashmap, Node* current, int num, int pos){
-  //if the bucket has 1/2/3 items, does normal linked list node deletion stuff
-  if(num == 1){
-    Node* next = current->getNext();
-    delete current;
-    hashmap[pos] = next;
-  }else if(num == 2){
-    Node* toDelete = current->getNext();
-    if(toDelete->getNext() != NULL){
-      current->setNext(toDelete->getNext());
-    }
-    delete toDelete;
-  }else if(num == 3){
-    Node* next = current->getNext();
-    Node* toDelete = next->getNext();
-    next->setNext(NULL);
-    delete toDelete;
-  }
-}
-
-void print(Node** hashmap, Node* current, int i, int id){
-  Student* student = current->getStudent();
-  //prints entirety of bucket so that i don't have to account for errors resulting from 2 of the same ID
-  cout << i << ":";
-  if(student->id == id){
-    cout << student->id << " " << student->first << " " << student->last << " " << student->gpa << endl;
-   }else{
-    cout << "N/A" << endl;
-  }
-    if(current->getNext() != NULL){
-      i++;
-      print(hashmap, current->getNext(), i, id);
-   }
-}
-
-int hashf(int id, int HASH_LENGTH){
-  //modulus hash function most obscure
-  return id % HASH_LENGTH;
-}
-
-int getI(int& i){
-  //needed for incrementing randomization
-  i++;
-  return i;
-}
-
-/*
-int hashf(char* id, int HASH_LENGTH){
-  hashes input (with too much int division)
-  return ((id[0] - '0') + (id[1] - '0') + (id[2] - '0') +
-          (id[3] - '0') + (id[4] - '0') + (id[5] - '0')) * (id[5] - '0') / (HASH_LENGTH/25);
-}
-*/
-
-
-
-
-
-
 
 
 
