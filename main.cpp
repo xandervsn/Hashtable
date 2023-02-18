@@ -4,8 +4,6 @@
   Feb 17, 2023
 
   Hashtable: implementation of a hashtable (aka hashmap aka map) in C++
-
-  note: names are a bit off some times (unicode thing maybe?) but it doesn't affect the code
 */
 
 #include <iostream>
@@ -31,13 +29,13 @@ int main(){
   int currentID = 0; //globalish var needed for incrementation
   empty(hashtable, HASH_LENGTH); //sets all hashtable values as null
   while(true){
-    cout << "Input command (ADD, PRINT, DLT, QUIT):" << endl;
+    cout << "Type a valid command(ADD, PRINT, DLT, QUIT)" << endl;
     cin >> input;
     if(strcmp(input,"ADD") == 0){
       cout << "Add by user input (INPUT) or randomization (RAND)?" << endl;
       cin >> input;
       if(strcmp(input,"RAND") == 0){
-        hashtable = add(hashtable, currentID, HASH_LENGTH);    
+        hashtable = add(hashtable, currentID, HASH_LENGTH);
       }else if(strcmp(input,"INPUT") == 0){
         hashtable = inputAdd(hashtable, currentID, HASH_LENGTH);
       }
@@ -129,7 +127,7 @@ node** rehash(node** hashtable, node** newmap, int& HASH_LENGTH, int currentID){
   HASH_LENGTH = HASH_LENGTH*2;
   for(int i = 0; i < currentID; i++){
     //if statements for 3 different possible node placements
-    if(i < oldHASH_LENGTH){ 
+    if(i < oldHASH_LENGTH){
       newmap[(i%HASH_LENGTH)] = hashtable[(i)%oldHASH_LENGTH];
 
     }else if(i < oldHASH_LENGTH*2){
@@ -226,29 +224,3 @@ node** inputAdd(node** hashtable, int&currentID, int& HASH_LENGTH){
   currentID++;
   return hashtable;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
