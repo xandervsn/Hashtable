@@ -10,6 +10,7 @@
 #include <cstring>
 #include "node.h"
 #include <vector>
+#include <cmath>
 #include <iomanip>
 #include <fstream>
 
@@ -35,7 +36,7 @@ int main(){
       cout << "Add by user input (INPUT) or randomization (RAND)?" << endl;
       cin >> input;
       if(strcmp(input,"RAND") == 0){
-        hashtable = add(hashtable, currentID, HASH_LENGTH);
+        hashtable = add(hashtable, currentID, HASH_LENGTH);    
       }else if(strcmp(input,"INPUT") == 0){
         hashtable = inputAdd(hashtable, currentID, HASH_LENGTH);
       }
@@ -55,49 +56,46 @@ node** add(node** hashtable, int& currentID, int& HASH_LENGTH){ //adds random to
   cout << "Input number of students to add:" << endl;
   cin >> students;
   for(int i = 0; i < students; i++){
-    char input[100];
-    char first[100];
-    char last[100];
-    fstream ffile("firstname.txt");
-    fstream lfile("lastnames.txt");
-    int count;
-    int num = (rand() % 20) + 1;
-    int num2 = (rand() % 20) + 1;
-    node* newPoint = new node();
-    count = 1;
-    //1st name gen
-    while (ffile.getline(input,100, '\n')) {
-      if (count == num) {
-        strcpy(first,input);
-        count++;
-      }
-      count++;
+    //gen 1st name
+    ifstream firstFile; //file reader
+    firstFile.open("firstname.txt");
+    char arr[100][50];
+    int j = 0;
+    while(firstFile.getline(arr[j],49,' ')){
+      j++;
+      //cout << arr[j] << endl;
     }
-    ffile.close();
-    count = 1;
-    //last name gen
-    while (lfile.getline(input,100, '\n')) {
-      if (count == num2) {
-        strcpy(last, input);
-        count++;
-      }
-      count++;
-    }
-    lfile.close();
-    //gpa gen
-    float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-    r *= 23;
-    while(r > 4){
-      r -= 4;
-      while(r < 2){
-        r += 1;
-      }
-    }
+    //cout << arr[3] << endl;
+    //pick random name from created char* array above
+    int random = rand() % 10;
+    //    cout << random << endl;
+    //    cout << arr[random] << endl;
+    char* first = arr[random];
 
+    //cout << "1" << endl;
+    //gen last name
+    //same as above
+    ifstream lastFile;
+    lastFile.open("lastnames.txt");
+    j = 0;
+    while(lastFile.getline(arr[j],49,' ')){
+      j++;
+    }
+    random = rand() % 10;
+    char* last = arr[random];
+    //    cout << "2" << endl;
+    //gen gpa
+    double randF = (double)rand();
+    double gpa = fmod(randF, 4.99);
+    node* newPoint = new node();
     strcpy(newPoint->first, first);
+    //    cout << "3" << endl;
     strcpy(newPoint->last, last);
+    //    cout << "4" << endl;
     newPoint->id = currentID;
-    newPoint->gpa = r;
+    //    cout << "5" << endl;
+    newPoint->gpa = gpa;
+    //    cout << "6" << endl;
     //if statements basically go through every permutation of bucket fillability
     if(hashtable[(currentID)%HASH_LENGTH] == NULL){ //1 in bucket
       hashtable[(currentID%HASH_LENGTH)] = newPoint;
@@ -127,7 +125,7 @@ node** rehash(node** hashtable, node** newmap, int& HASH_LENGTH, int currentID){
   HASH_LENGTH = HASH_LENGTH*2;
   for(int i = 0; i < currentID; i++){
     //if statements for 3 different possible node placements
-    if(i < oldHASH_LENGTH){
+    if(i < oldHASH_LENGTH){ 
       newmap[(i%HASH_LENGTH)] = hashtable[(i)%oldHASH_LENGTH];
 
     }else if(i < oldHASH_LENGTH*2){
@@ -224,3 +222,5 @@ node** inputAdd(node** hashtable, int&currentID, int& HASH_LENGTH){
   currentID++;
   return hashtable;
 }
+
+
