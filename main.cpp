@@ -30,7 +30,7 @@ int main(){
   int currentID = 0; //globalish var needed for incrementation
   empty(hashtable, HASH_LENGTH); //sets all hashtable values as null
   while(true){
-    cout << "Type a valid command(ADD, PRINT, DLT, QUIT)" << endl;
+    cout << "Input command (ADD, PRINT, DLT, QUIT):" << endl;
     cin >> input;
     if(strcmp(input,"ADD") == 0){
       cout << "Add by user input (INPUT) or randomization (RAND)?" << endl;
@@ -157,7 +157,7 @@ void print(node** hashtable, int HASH_LENGTH){
     cout << "No such student!" << endl;
     return;
   }
-  cout << current->first << " " << current->last << " GPA: " <<  fixed << setprecision(2) << current->gpa << " ID: " << current->id << endl;
+   cout << current->id << " " << current->first << " " << current->last << " " << current->gpa << endl;
 }
 
 
