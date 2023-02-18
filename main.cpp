@@ -21,7 +21,8 @@ int getI(int&);
 void add(Node** hashmap, Node* newStudent, int, int&);
 void print(Node** hashmap, Node* student, int, int);
 void dlt(Node** hashmap, Node* current, int, int);
-
+void reassign(Node** newmap, Node* current, Node* head, int pos, int HASH_LENGTH);
+  
 int main(){
   int HASH_LENGTH = 100;
   //Node* hashmap[HASH_LENGTH];
@@ -156,55 +157,24 @@ void add(Node** hashmap, Node* newStudent, int pos, int& HASH_LENGTH){
     for(int i = 0; i < HASH_LENGTH; i++){
       newmap[i] = NULL;
     }
-    
-    for(int i = 0; i < OG_LENGTH; i++){
-      //goes through og array and reassigns every item
-      bool two = false;
-      bool three = false;
-      //again, if statements go through ever possible iteration of a bucket
-      if(hashmap[i] != NULL){
-	cout << hashmap[i]->getNext() << endl;
-	cout << "1" << endl;
-	int id = hashmap[i]->getStudent()->id;
-	cout << "2" << endl;
-	int pos2 = hashf(id, HASH_LENGTH);
-	cout << "3" << endl;
-	Node* newStudent = hashmap[i];
-	cout << "4";
-	add(newmap, newStudent, pos2, HASH_LENGTH);
-	cout << newmap[1]->getStudent()->first << endl;
-	cout << "5" << endl;
-	
-	Node* next = hashmap[i]->getNext();
-	cout << "6: " << next << endl;
-	if(next != NULL){
-	  cout << "2" << endl;
-	  two = true;
-	  id = next->getStudent()->id;
-	  int pos2 = hashf(id, HASH_LENGTH);
-	  Node* newStudent = hashmap[i];
-	  newStudent->setNext(NULL);
-	  add(newmap, newStudent, pos2, HASH_LENGTH);
-	}
 
-	if(next->getNext() != NULL){
-	  cout << "3" << endl;
-	  three = true;
-	  id = next->getNext()->getStudent()->id;
-	  int pos2 = hashf(id, HASH_LENGTH);
-	  Node* newStudent = hashmap[i];
-	  newStudent->setNext(NULL);
-	  add(newmap, newStudent, pos2, HASH_LENGTH);
-	}
+    for(int i = 0; i < OG_LENGTH; i++){
+      if(hashmap[i] != NULL){
+	int pos2 = hashf(hashmap[i]->getStudent()->id, HASH_LENGTH);
+	reassign(newmap, hashmap[i], hashmap[i], pos2, HASH_LENGTH);
+	
       }
-      cout << "7" << endl;
     }
-    cout << "8" << endl;
-    hashmap = newmap;
-    cout << "9" << endl;
   }
 }
 
+void reassign(Node** newmap, Node* current, Node* head, int pos, int HASH_LENGTH){
+  if(current->getNext() == NULL){
+    add(newmap, current, pos, HASH_LENGTH);
+  }else{
+    reassign(newmap, current->getNext(), head, pos, HASH_LENGTH);
+  }
+}
 
 void dlt(Node** hashmap, Node* current, int num, int pos){
   //if the bucket has 1/2/3 items, does normal linked list node deletion stuff
